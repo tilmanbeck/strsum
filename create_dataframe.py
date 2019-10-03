@@ -1,6 +1,7 @@
 # coding:utf-8
 
 import gzip
+import json
 import re
 
 import pandas as pd
@@ -9,18 +10,16 @@ from nltk.tokenize import word_tokenize
 
 import _pickle as cPickle
 
-flags = tf.app.flags
-
-flags.DEFINE_string('input_path', 'data/reviews_Sports_and_Outdoors_5.json.gz', 'path of output data')
-flags.DEFINE_string('output_path', 'data/sports_df.pkl', 'path of output data')
-
-flags.DEFINE_integer('min_doc_l_train', 10, 'minimum length of document for training')
-flags.DEFINE_integer('max_doc_l_train', 60, 'maximum length of document for training')
-flags.DEFINE_integer('max_sent_l_train', 50, 'maximum length of sentence for training')
-
-flags.DEFINE_integer('min_doc_l_test', 5, 'minimum length of document for evaluation')
-flags.DEFINE_integer('max_doc_l_test', 60, 'maximum length of document for evaluation')
-flags.DEFINE_integer('max_sent_l_test', 50, 'maximum length of sentence for evaluation')
+def remove_gold_arguments(df, gold_args):
+    regex = re.compile("[^a-zA-Z0-9]")
+    df["sentence_clean"] = df['sentence'].apply(lambda x: " ".join(regex.sub(" ", x).lower().strip().split()))
+    indices = []
+    for arg in gold_args:
+        indices += df.index[
+            df["sentence_clean"].str.contains(" ".join(regex.sub(" ", arg).lower().strip().split()), regex=False,
+                                              case=False)].tolist()
+    df.drop(index=indices, inplace=True)
+    return df
 
 def get_df(path):
     def parse(path):
@@ -34,6 +33,36 @@ def get_df(path):
         df[i] = d
         i += 1
     return pd.DataFrame.from_dict(df, orient='index')
+
+def get_df_direct(path):
+
+    df = pd.read_csv(path + '/emnlp2018.tsv', sep='\t', header=0)
+    df.drop_duplicates(inplace=True)
+
+    with open(path + '/gold_arguments.json', 'r') as fp:
+        gold_args = json.load(fp)
+
+    gold_arguments = []
+    for t in gold_args.keys():
+        gold_arguments += [i['title'] for i in gold_args[t]['pro_points']]
+        gold_arguments += [i['title'] for i in gold_args[t]['contra_points']]
+    df = remove_gold_arguments(df, gold_arguments)
+    
+    tmp = []
+    topics = pd.unique(df['topic'])
+    for t in topics:
+        # pro arguments as one review text, gold arguments as summmarx
+        data = df[(df['topic'] == t) & (df['annotation'] == 'Argument_for')]
+        g = [i['text'] for i in gold_args[t]['pro_points']]
+        dic = {'reviewText': " ".join(data['sentence'].tolist()), 'summary': " ".join(g)}
+        tmp.append(dic)
+        # con arguments as one review text, gold arguments as summmarx
+        data = df[(df['topic'] == t) & (df['annotation'] == 'Argument_against')]
+        g = [i['text'] for i in gold_args[t]['contra_points']]
+        dic = {'reviewText': " ".join(data['sentence'].tolist()), 'summary': " ".join(g)}
+        tmp.append(dic)
+    return pd.DataFrame(tmp)
+
 
 def get_tokens(doc):
     shortened = {
@@ -97,11 +126,22 @@ def get_tokens(doc):
     return tokens
 
 def main():
-    config = flags.FLAGS
-    print(str(config.flag_values_dict()))
-    
+
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input_path', default='data/')
+    parser.add_argument('--output_path', default='data/arguments.pkl')
+    parser.add_argument('--min_doc_l_train', default=10, type=int)
+    parser.add_argument('--max_doc_l_train', default=60, type=int)
+    parser.add_argument('--max_sent_l_train', default=50, type=int)
+    parser.add_argument('--min_doc_l_test', default=5, type=int)
+    parser.add_argument('--max_doc_l_test', default=60, type=int)
+    parser.add_argument('--max_sent_l_test', default=50, type=int)
+
+    args = parser.parse_args()
     print('parsing raw data...')
-    raw_review_df = get_df(config.input_path)
+    #raw_review_df = get_df(args.input_path)
+    raw_review_df = get_df_direct(args.input_path)
     review_df = raw_review_df[(raw_review_df['reviewText'] != '') & (raw_review_df['summary'] != '')]
     
     print('splitting text into tokens...')
@@ -118,12 +158,12 @@ def main():
     dev_all_df = review_df[1000:2000]
     train_all_df = review_df[2000:]
     
-    train_df = train_all_df[(train_all_df['doc_l']>=config.min_doc_l_train)&(train_all_df['doc_l']<=config.max_doc_l_train)&(train_all_df['max_sent_l']<=config.max_sent_l_train)]
-    dev_df = dev_all_df[(dev_all_df['doc_l']>=config.min_doc_l_test)&(dev_all_df['doc_l']<=config.max_doc_l_test)&(dev_all_df['max_sent_l']<=config.max_sent_l_test)]
-    test_df = test_all_df[(test_all_df['doc_l']>=config.min_doc_l_test)&(test_all_df['doc_l']<=config.max_doc_l_test)&(test_all_df['max_sent_l']<=config.max_sent_l_test)]
+    train_df = train_all_df[(train_all_df['doc_l']>=args.min_doc_l_train)&(train_all_df['doc_l']<=args.max_doc_l_train)&(train_all_df['max_sent_l']<=args.max_sent_l_train)]
+    dev_df = dev_all_df[(dev_all_df['doc_l']>=args.min_doc_l_test)&(dev_all_df['doc_l']<=args.max_doc_l_test)&(dev_all_df['max_sent_l']<=args.max_sent_l_test)]
+    test_df = test_all_df[(test_all_df['doc_l']>=args.min_doc_l_test)&(test_all_df['doc_l']<=args.max_doc_l_test)&(test_all_df['max_sent_l']<=args.max_sent_l_test)]
     
     print('saving set of train, dev, test...')
-    cPickle.dump((train_df, dev_df, test_df), open(config.output_path, 'wb'))
+    cPickle.dump((train_df, dev_df, test_df), open(args.output_path, 'wb'))
     
 if __name__ == "__main__":
     main()
