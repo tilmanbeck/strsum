@@ -9,13 +9,7 @@ import tensorflow as tf
 
 from data_structure import Instance
 
-flags = tf.app.flags
 
-flags.DEFINE_string('input_path', 'data/sports_df.pkl', 'path of output data')
-flags.DEFINE_string('output_path', 'data/sports.pkl', 'path of input data')
-flags.DEFINE_string('word_vec_path', 'data/crawl-300d-2M.vec', 'path of pretrained word vec')
-
-flags.DEFINE_integer('n_vocab', 50000, 'size of vocab')
 
 # special tokens
 PAD = '<pad>' # This has a vocab id, which is used to pad the encoder input, decoder input and target sequence
@@ -104,11 +98,17 @@ def prepare_instancelst(data_df, vocab):
     return instancelst
 
 def main():
-    config = flags.FLAGS
-    print(str(config.flag_values_dict()))
 
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input_path', default='data/arguments.pkl')
+    parser.add_argument('--output_path', default='data/output')
+    parser.add_argument('--word_vec_path', default='data/crawl-300d-2M.vec')
+    parser.add_argument('--n_vocab', default=50000)
+
+    args = parser.parse_args()
     print('loading input data...')
-    train_df, dev_df, test_df = cPickle.load(open(config.input_path, 'rb'))
+    train_df, dev_df, test_df = cPickle.load(open(args.input_path, 'rb'))
     
     tokens = []
     for doc in train_df.tokens:
@@ -118,11 +118,11 @@ def main():
     
     print('loading pretrained word vectors...')
     word_list = get_word_list(tokens)
-    fasttext_vec = get_fasttext(config.word_vec_path)
+    fasttext_vec = get_fasttext(args.word_vec_path)
     word_vec = get_word_vec(word_list, fasttext_vec)
     
     word_emb_dim = list(fasttext_vec.values())[0].shape[0]
-    vocab, embeddings = get_vocab_emb(word_vec, word_emb_dim, n_vocab=config.n_vocab)    
+    vocab, embeddings = get_vocab_emb(word_vec, word_emb_dim, n_vocab=args.n_vocab)    
     
     print('building instances...')
     instances_train = prepare_instancelst(train_df, vocab)
@@ -130,7 +130,7 @@ def main():
     instances_test = prepare_instancelst(test_df, vocab)
     
     print('saving preprocessed data...')
-    cPickle.dump((instances_train, instances_dev, instances_test, embeddings, vocab),open(config.output_path,'wb'))
+    cPickle.dump((instances_train, instances_dev, instances_test, embeddings, vocab),open(args.output_path,'wb'))
         
 if __name__ == "__main__":
     main()

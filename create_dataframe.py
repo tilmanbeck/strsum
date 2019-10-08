@@ -52,14 +52,20 @@ def get_df_direct(path):
     topics = pd.unique(df['topic'])
     for t in topics:
         # pro arguments as one review text, gold arguments as summmarx
-        data = df[(df['topic'] == t) & (df['annotation'] == 'Argument_for')]
-        g = [i['text'] for i in gold_args[t]['pro_points']]
-        dic = {'reviewText': " ".join(data['sentence'].tolist()), 'summary': " ".join(g)}
+        data = df[(df['topic'] == t) & (df['label'] == 'pro')]
+        g = [i['title'] for i in gold_args[t]['pro_points']]
+        summary = ".".join(g)
+        summary = summary.replace("..", ".")
+        reviewText = " ".join(data['sentence'].tolist())
+        dic = {'reviewText': reviewText, 'summary': summary}
         tmp.append(dic)
         # con arguments as one review text, gold arguments as summmarx
-        data = df[(df['topic'] == t) & (df['annotation'] == 'Argument_against')]
-        g = [i['text'] for i in gold_args[t]['contra_points']]
-        dic = {'reviewText': " ".join(data['sentence'].tolist()), 'summary': " ".join(g)}
+        data = df[(df['topic'] == t) & (df['label'] == 'con')]
+        g = [i['title'] for i in gold_args[t]['contra_points']]
+        summary = ".".join(g)
+        summary = summary.replace("..", ".")
+        reviewText = " ".join(data['sentence'].tolist())
+        dic = {'reviewText': reviewText, 'summary': summary}
         tmp.append(dic)
     return pd.DataFrame(tmp)
 
@@ -142,6 +148,7 @@ def main():
     print('parsing raw data...')
     #raw_review_df = get_df(args.input_path)
     raw_review_df = get_df_direct(args.input_path)
+    print(raw_review_df)
     review_df = raw_review_df[(raw_review_df['reviewText'] != '') & (raw_review_df['summary'] != '')]
     
     print('splitting text into tokens...')
@@ -154,9 +161,13 @@ def main():
     review_df = review_df[(review_df['summary_tokens'].apply(lambda x: len(x)) > 0)]
     
     print('splitting data into train, dev, test...')
-    test_all_df = review_df[0:1000]
-    dev_all_df = review_df[1000:2000]
-    train_all_df = review_df[2000:]
+    topics = pd.unique(review_df['topic'])
+    train_topics = topics[0:4]
+    dev_topics = topics[4:6]
+    test_topics = topics[6:]
+    test_all_df = review_df[review_df['topic'].isin(test_topics)]
+    dev_all_df = review_df[review_df['topic'].isin(dev_topics)]
+    train_all_df = review_df[review_df['topic'].isin(train_topics)]
     
     train_df = train_all_df[(train_all_df['doc_l']>=args.min_doc_l_train)&(train_all_df['doc_l']<=args.max_doc_l_train)&(train_all_df['max_sent_l']<=args.max_sent_l_train)]
     dev_df = dev_all_df[(dev_all_df['doc_l']>=args.min_doc_l_test)&(dev_all_df['doc_l']<=args.max_doc_l_test)&(dev_all_df['max_sent_l']<=args.max_sent_l_test)]

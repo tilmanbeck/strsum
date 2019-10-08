@@ -5,40 +5,8 @@ import tensorflow as tf
 from train import train
 from evaluate import evaluate
 from data_structure import load_data
+from attrdict import AttrDict
 
-flags = tf.app.flags
-
-flags.DEFINE_string('gpu', '0', 'visible gpu')
-
-flags.DEFINE_string('mode', 'train', 'set train or eval')
-
-flags.DEFINE_string('datadir', 'data', 'directory of input data')
-flags.DEFINE_string('dataname', 'sports.pkl', 'name of data')
-flags.DEFINE_string('modeldir', 'model', 'directory of model')
-flags.DEFINE_string('modelname', 'sports', 'name of model')
-
-flags.DEFINE_bool('discourserank', True, 'flag of discourserank')
-flags.DEFINE_float('damp', 0.9, 'damping factor of discourserank')
-
-flags.DEFINE_integer('epochs', 10, 'epochs')
-flags.DEFINE_integer('batch_size', 8, 'batch size')
-flags.DEFINE_integer('log_period', 500, 'valid period')
-
-flags.DEFINE_string('opt', 'Adagrad', 'optimizer')
-flags.DEFINE_float('lr', 0.1, 'lr')
-flags.DEFINE_float('norm', 1e-4, 'norm')
-flags.DEFINE_float('grad_clip', 10.0, 'grad_clip')
-flags.DEFINE_float('keep_prob', 0.95, 'keep_prob')
-flags.DEFINE_integer('beam_width', 10, 'beam_width')
-flags.DEFINE_float('length_penalty_weight', 0.0, 'length_penalty_weight')
-
-flags.DEFINE_integer('dim_hidden', 256, 'dim_output')
-flags.DEFINE_integer('dim_str', 128, 'dim_output')
-flags.DEFINE_integer('dim_sent', 384, 'dim_sent')
-
-# for evaluation
-flags.DEFINE_string('refdir', 'ref', 'refdir')
-flags.DEFINE_string('outdir', 'out', 'outdir')
 
 # special tokens
 PAD = '<pad>' # This has a vocab id, which is used to pad the encoder input, decoder input and target sequence
@@ -46,26 +14,54 @@ UNK = '<unk>' # This has a vocab id, which is used to represent out-of-vocabular
 BOS = '<p>' # This has a vocab id, which is used at the beginning of every decoder input sequence
 EOS = '</p>' # This has a vocab id, which is used at the end of untruncated target sequences
 
-def main(_):
-    config = flags.FLAGS
-    print(str(config.flag_values_dict()))
-    
-    os.environ['CUDA_VISIBLE_DEVICES'] = config.gpu
+def run():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input_path', default='data/arguments.pkl')
+    parser.add_argument('--output_path', default='data/output')
+    parser.add_argument('--word_vec_path', default='data/crawl-300d-2M.vec')
+    parser.add_argument('--mode', default='train', choices=['train', 'eval'])
+    parser.add_argument('--datadir', default='data', help='directory of input data')
+    parser.add_argument('--dataname', default='sports.pkl', help='name of data')
+    parser.add_argument('--modeldir', default='model', help='directory of model')
+    parser.add_argument('--modelname', default='sports', help='name of model')
 
+    parser.add_argument('--discourserank', default=True, help='flag of discourserank')
+    parser.add_argument('--damp', default=0.9, help='damping factor of discourserank')
+    parser.add_argument('--epochs', default=10, help='epochs')
+    parser.add_argument('--batch_size', default=8, help='batch size')
+    parser.add_argument('--log_period', default=500, help='valid period')
+
+    parser.add_argument('--opt', default='Adagrad', help='optimizer')
+    parser.add_argument('--lr', default=0.1, help='learning rate')
+    parser.add_argument('--norm', default=1e-4, help='norm')
+    parser.add_argument('--grad_clip', default=10.0, help='grad_clip')
+    parser.add_argument('--keep_prob', default=0.95, help='keep_prob')
+    parser.add_argument('--beam_width', default=10, help='beam_width')
+    parser.add_argument('--length_penalty_weight', default=0.0, help='length_penalty_weight')
+
+    parser.add_argument('--dim_hidden', default=256, help='hidden dimensions')
+    parser.add_argument('--dim_str', default=128, help='dimension str')
+    parser.add_argument('--dim_sent', default=384, help='dim_sent')
+
+    # for evaluation
+    parser.add_argument('--refdir', default='ref', help='refdir')
+    parser.add_argument('--outdir', default='out', help='outdir')
+    config = AttrDict(vars(parser.parse_args()))
+    
     print('loading data...')
     train_batches, dev_batches, test_batches, embedding_matrix, vocab, word_to_id  = load_data(config)
-    
-    flags.DEFINE_integer('PAD_IDX', word_to_id[PAD], 'PAD_IDX')
-    flags.DEFINE_integer('UNK_IDX', word_to_id[UNK], 'UNK_IDX')
-    flags.DEFINE_integer('BOS_IDX', word_to_id[BOS], 'BOS_IDX')
-    flags.DEFINE_integer('EOS_IDX', word_to_id[EOS], 'EOS_IDX')
+    config.PAD_IDX = word_to_id[PAD]
+    config.UNK_IDX = word_to_id[UNK]
+    config.BOS_IDX = word_to_id[BOS]
+    config.EOS_IDX = word_to_id[EOS]
     
     n_embed, d_embed = embedding_matrix.shape
-    flags.DEFINE_integer('n_embed', n_embed, 'n_embed')
-    flags.DEFINE_integer('d_embed', d_embed, 'd_embed')
+    config.n_embed = n_embed
+    config.d_embed = d_embed
 
     maximum_iterations = max([max([d._max_sent_len(None) for d in batch]) for ct, batch in dev_batches])
-    flags.DEFINE_integer('maximum_iterations', maximum_iterations, 'maximum_iterations')    
+    config.maximum_iterations = maximum_iterations
     
     if config.mode == 'train':
         train(config, train_batches, dev_batches, test_batches, embedding_matrix, vocab)
@@ -73,7 +69,7 @@ def main(_):
         evaluate(config, test_batches, vocab)
 
 if __name__ == "__main__":
-    tf.app.run()
+    run()
     
     
     

@@ -6,7 +6,7 @@ import random
 import itertools
 from six.moves import zip_longest
 #import cPickle
-import _pickle as cPickle
+import pickle
 
 class Instance:
     def __init__(self):
@@ -81,7 +81,7 @@ def sort_data(data, train):
 
 def load_data(config):
     datapath = os.path.join(config.datadir, config.dataname)
-    train, dev, test, embeddings, word_to_id = cPickle.load(open(datapath, 'rb'), encoding='latin1')
+    train, dev, test, embeddings, word_to_id = pickle.load(open(datapath, 'rb'), encoding='latin1')
     trainset, devset, testset = DataSet(train, train=True), DataSet(dev, train=False), DataSet(test, train=False)
     print('Number of train examples: %i' % trainset.num_examples)
     vocab = dict([(v, k) for k,v in word_to_id.items()])
