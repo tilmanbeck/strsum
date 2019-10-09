@@ -102,7 +102,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_path', default='data/arguments.pkl')
-    parser.add_argument('--output_path', default='data/output')
+    parser.add_argument('--output_path', default='data/input.pkl')
     parser.add_argument('--word_vec_path', default='data/crawl-300d-2M.vec')
     parser.add_argument('--n_vocab', default=50000)
 

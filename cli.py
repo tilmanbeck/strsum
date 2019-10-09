@@ -17,14 +17,12 @@ EOS = '</p>' # This has a vocab id, which is used at the end of untruncated targ
 def run():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input_path', default='data/arguments.pkl')
-    parser.add_argument('--output_path', default='data/output')
     parser.add_argument('--word_vec_path', default='data/crawl-300d-2M.vec')
     parser.add_argument('--mode', default='train', choices=['train', 'eval'])
-    parser.add_argument('--datadir', default='data', help='directory of input data')
-    parser.add_argument('--dataname', default='sports.pkl', help='name of data')
+    parser.add_argument('--datadir', default='data/', help='directory of input data')
+    parser.add_argument('--dataname', default='input.pkl', help='name of data')
     parser.add_argument('--modeldir', default='model', help='directory of model')
-    parser.add_argument('--modelname', default='sports', help='name of model')
+    parser.add_argument('--modelname', default='args', help='name of model')
 
     parser.add_argument('--discourserank', default=True, help='flag of discourserank')
     parser.add_argument('--damp', default=0.9, help='damping factor of discourserank')

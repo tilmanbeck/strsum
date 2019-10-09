@@ -65,16 +65,16 @@ def train(config, train_batches, dev_batches, test_batches, embedding_matrix, vo
     res = subprocess.call(cmd_mk.split())
     
     # set logger
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    logpath = os.path.join(config.modeldir, config.modelname+'.log')
-    ah = logging.FileHandler(logpath)
-    ah.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(message)s')
-    ah.setFormatter(formatter)
-    logger.addHandler(ah)
+    # logger = logging.getLogger()
+    # logger.setLevel(logging.DEBUG)
+    # logpath = os.path.join(config.modeldir, config.modelname+'.log')
+    # ah = logging.FileHandler(logpath)
+    # ah.setLevel(logging.DEBUG)
+    # formatter = logging.Formatter('%(asctime)s - %(message)s')
+    # ah.setFormatter(formatter)
+    # logger.addHandler(ah)
     
-    logger.critical(str(config.flag_values_dict()))
+    # logger.critical(str(config.flag_values_dict()))
     
     # build model
     model = StrSumModel(config)
@@ -107,5 +107,5 @@ def train(config, train_batches, dev_batches, test_batches, embedding_matrix, vo
  
             print('Step: %i | LOSS TRAIN: %.3f, DEV: %.3f, TEST: %.3f | DEV ROUGE-1: %.3f, -2: %.3f, -L: %.3f | TEST ROUGE: -1: %.3f, -2: %.3f, -L: %.3f' %  ((ct, loss_train, loss_dev, loss_test) + rouge_dev + rouge_test))
             
-            logger.debug('Step: %i | LOSS TRAIN: %.3f, DEV: %.3f, TEST: %.3f | DEV ROUGE-1: %.3f, -2: %.3f, -L: %.3f | TEST ROUGE: -1: %.3f, -2: %.3f, -L: %.3f' %  ((ct, loss_train, loss_dev, loss_test) + rouge_dev + rouge_test))
-            logger.handlers[0].flush()
+            # logger.debug('Step: %i | LOSS TRAIN: %.3f, DEV: %.3f, TEST: %.3f | DEV ROUGE-1: %.3f, -2: %.3f, -L: %.3f | TEST ROUGE: -1: %.3f, -2: %.3f, -L: %.3f' %  ((ct, loss_train, loss_dev, loss_test) + rouge_dev + rouge_test))
+            # logger.handlers[0].flush()
