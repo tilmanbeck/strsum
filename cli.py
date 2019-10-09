@@ -46,7 +46,7 @@ def run():
     parser.add_argument('--refdir', default='ref', help='refdir')
     parser.add_argument('--outdir', default='out', help='outdir')
     config = AttrDict(vars(parser.parse_args()))
-    
+
     print('loading data...')
     train_batches, dev_batches, test_batches, embedding_matrix, vocab, word_to_id  = load_data(config)
     config.PAD_IDX = word_to_id[PAD]
@@ -60,6 +60,7 @@ def run():
 
     maximum_iterations = max([max([d._max_sent_len(None) for d in batch]) for ct, batch in dev_batches])
     config.maximum_iterations = maximum_iterations
+    print('max iter:', maximum_iterations)
     
     if config.mode == 'train':
         train(config, train_batches, dev_batches, test_batches, embedding_matrix, vocab)
