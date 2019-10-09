@@ -94,18 +94,18 @@ def train(config, train_batches, dev_batches, test_batches, embedding_matrix, vo
         feed_dict = model.get_feed_dict(batch)
         _, loss_batch = sess.run([model.opt, model.loss], feed_dict = feed_dict)
         losses_train += [loss_batch]
-        if ct%config.log_period==0:
-            loss_train = np.mean(losses_train)
-            loss_dev, rouge_dev = evaluate(sess, dev_batches, model, vocab)
-            rouge_l = rouge_dev[-1]
+        #if ct%config.log_period==0:
+        loss_train = np.mean(losses_train)
+        loss_dev, rouge_dev = evaluate(sess, dev_batches, model, vocab)
+        rouge_l = rouge_dev[-1]
 
-            if rouge_l >= rouge_l_max:
-                rouge_l_max = rouge_l
-                loss_test, rouge_test = evaluate(sess, test_batches, model, vocab)
-                modelpath = os.path.join(config.modeldir, config.modelname)
-                saver.save(sess, modelpath, global_step=ct)
- 
-            print('Step: %i | LOSS TRAIN: %.3f, DEV: %.3f, TEST: %.3f | DEV ROUGE-1: %.3f, -2: %.3f, -L: %.3f | TEST ROUGE: -1: %.3f, -2: %.3f, -L: %.3f' %  ((ct, loss_train, loss_dev, loss_test) + rouge_dev + rouge_test))
+        if rouge_l >= rouge_l_max:
+            rouge_l_max = rouge_l
+            loss_test, rouge_test = evaluate(sess, test_batches, model, vocab)
+            modelpath = os.path.join(config.modeldir, config.modelname)
+            saver.save(sess, modelpath, global_step=ct)
+
+        print('Step: %i | LOSS TRAIN: %.3f, DEV: %.3f, TEST: %.3f | DEV ROUGE-1: %.3f, -2: %.3f, -L: %.3f | TEST ROUGE: -1: %.3f, -2: %.3f, -L: %.3f' %  ((ct, loss_train, loss_dev, loss_test) + rouge_dev + rouge_test))
             
             # logger.debug('Step: %i | LOSS TRAIN: %.3f, DEV: %.3f, TEST: %.3f | DEV ROUGE-1: %.3f, -2: %.3f, -L: %.3f | TEST ROUGE: -1: %.3f, -2: %.3f, -L: %.3f' %  ((ct, loss_train, loss_dev, loss_test) + rouge_dev + rouge_test))
             # logger.handlers[0].flush()
