@@ -57,7 +57,7 @@ def get_df_direct(path):
         summary = ".".join(g)
         summary = summary.replace("..", ".")
         reviewText = " ".join(data['sentence'].tolist())
-        dic = {'reviewText': reviewText, 'summary': summary}
+        dic = {'reviewText': reviewText, 'summary': summary, 'topic': t, 'asin': hash(reviewText)}
         tmp.append(dic)
         # con arguments as one review text, gold arguments as summmarx
         data = df[(df['topic'] == t) & (df['label'] == 'con')]
@@ -65,7 +65,7 @@ def get_df_direct(path):
         summary = ".".join(g)
         summary = summary.replace("..", ".")
         reviewText = " ".join(data['sentence'].tolist())
-        dic = {'reviewText': reviewText, 'summary': summary}
+        dic = {'reviewText': reviewText, 'summary': summary, 'topic': t, 'asin': hash(reviewText)}
         tmp.append(dic)
     return pd.DataFrame(tmp)
 
@@ -169,12 +169,13 @@ def main():
     dev_all_df = review_df[review_df['topic'].isin(dev_topics)]
     train_all_df = review_df[review_df['topic'].isin(train_topics)]
     
-    train_df = train_all_df[(train_all_df['doc_l']>=args.min_doc_l_train)&(train_all_df['doc_l']<=args.max_doc_l_train)&(train_all_df['max_sent_l']<=args.max_sent_l_train)]
-    dev_df = dev_all_df[(dev_all_df['doc_l']>=args.min_doc_l_test)&(dev_all_df['doc_l']<=args.max_doc_l_test)&(dev_all_df['max_sent_l']<=args.max_sent_l_test)]
-    test_df = test_all_df[(test_all_df['doc_l']>=args.min_doc_l_test)&(test_all_df['doc_l']<=args.max_doc_l_test)&(test_all_df['max_sent_l']<=args.max_sent_l_test)]
+    
+    #train_df = train_all_df[(train_all_df['doc_l']>=args.min_doc_l_train)&(train_all_df['doc_l']<=args.max_doc_l_train)&(train_all_df['max_sent_l']<=args.max_sent_l_train)]
+    #dev_df = dev_all_df[(dev_all_df['doc_l']>=args.min_doc_l_test)&(dev_all_df['doc_l']<=args.max_doc_l_test)&(dev_all_df['max_sent_l']<=args.max_sent_l_test)]
+    #test_df = test_all_df[(test_all_df['doc_l']>=args.min_doc_l_test)&(test_all_df['doc_l']<=args.max_doc_l_test)&(test_all_df['max_sent_l']<=args.max_sent_l_test)]
     
     print('saving set of train, dev, test...')
-    cPickle.dump((train_df, dev_df, test_df), open(args.output_path, 'wb'))
+    cPickle.dump((train_all_df, dev_all_df, test_all_df), open(args.output_path, 'wb'))
     
 if __name__ == "__main__":
     main()

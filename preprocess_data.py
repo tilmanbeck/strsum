@@ -88,7 +88,7 @@ def prepare_instancelst(data_df, vocab):
             doc_token_idxs.append(sent_token_idxs)
         instance.token_idxs = doc_token_idxs
         instance.line_idxs = to_line_idxs(doc_token_idxs, vocab)
-        instance.goldLabel = doc.overall
+        #instance.goldLabel = doc.overall
         instance.summary = doc.summary
         instance.summary_tokens = doc.summary_tokens
         instance.summary_idxs = [vocab[token] if token in vocab else vocab[UNK] for token in instance.summary_tokens]
